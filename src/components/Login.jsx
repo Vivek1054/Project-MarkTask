@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-// import './index.css';
 
 function Login() {
   const [isLogin, setIsLogin] = useState(true);
@@ -12,48 +11,50 @@ function Login() {
 
   const toggleForm = () => setIsLogin(!isLogin);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    const url = isLogin ? '/api/auth/login' : '/api/auth/signup';
-    // const url = isLogin ? '/api/controllers/authControllers' : '/api/controllers/authControllers';
 
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          password,
-          ...(isLogin ? {} : { username })
-        })
-      });
+    const storedUsers = JSON.parse(localStorage.getItem('users')) || [];
 
-      const data = await res.json();
-
-      if (res.ok) {
-        alert(`${isLogin ? 'Login' : 'Signup'} success!`);
+    if (isLogin) {
+      // ✅ LOGIN LOGIC
+      const user = storedUsers.find(
+        (u) => u.email === email && u.password === password
+      );
+      if (user) {
+        alert('Login success!');
+        localStorage.setItem('currentUser', JSON.stringify(user));
         navigate('/MarkTask');
       } else {
-        alert(data.msg || 'Something went wrong');
+        alert('Invalid email or password');
       }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Something went wrong');
+    } else {
+      // ✅ SIGNUP LOGIC
+      const exists = storedUsers.some((u) => u.email === email);
+      if (exists) {
+        alert('User already exists');
+        return;
+      }
+      const newUser = { username, email, password };
+      storedUsers.push(newUser);
+      localStorage.setItem('users', JSON.stringify(storedUsers));
+      alert('Signup success! You can now log in.');
+      setIsLogin(true);
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-100 to-purple-200 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-6">
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }} 
-        animate={{ opacity: 1, scale: 1 }} 
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
         className="w-full max-w-md bg-white dark:bg-gray-900 dark:text-white rounded-2xl shadow-2xl p-8 backdrop-blur-md bg-opacity-60"
       >
-        <motion.h1 
+        <motion.h1
           className="text-3xl font-bold text-center font-fancy text-animate mb-6"
-          initial={{ opacity: 0, y: -20 }} 
-          animate={{ opacity: 1, y: 0 }} 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
           {isLogin ? 'Welcome Back 👋' : 'Create Your Account 📝'}
@@ -98,8 +99,8 @@ function Login() {
 
         <p className="mt-4 text-sm text-center text-gray-600 dark:text-gray-400">
           {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
-          <button 
-            onClick={toggleForm} 
+          <button
+            onClick={toggleForm}
             className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
           >
             {isLogin ? 'Sign Up' : 'Login'}
